@@ -17,7 +17,7 @@ struct Deck<'a> {
 }
 
 impl<'a> Deck<'a> {
-    const SUITS: [&'static str; 4] = ["Clubs", "Hearts", "Spades", "Diamonds"];
+    const SUITS: [&'static str; 4] = ["♠", "♥", "♦", "♣"];
 
     const VALUES: [&'static str; 13] = [
         "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K",
@@ -25,7 +25,7 @@ impl<'a> Deck<'a> {
 
     const EXCLUDED_VALUES: [&'static str; 4] = ["A", "J", "Q", "K"];
 
-    const EXCLUDED_SUITS: [&'static str; 2] = ["Hearts", "Diamonds"];
+    const EXCLUDED_SUITS: [&'static str; 2] = ["♥", "♦"];
 
     fn new() -> Deck<'a> {
         let mut cards: Vec<Card<'a>> = Vec::new();
@@ -79,12 +79,14 @@ impl<'a> Deck<'a> {
             }
         }
 
-        let mut dealt_cards = String::new();
+        let mut dealt_cards: Vec<String> = Vec::new();
 
         self.cards_in_room.iter().for_each(|card| {
-            let card_annotation = format!("{}-{}", card.suit, card.value);
-            dealt_cards.push_str(&card_annotation);
+            let card_annotation = format!(" {}{} ", card.suit, card.value);
+            dealt_cards.push(card_annotation);
         });
+
+        let dealt_cards = dealt_cards.join(" ");
 
         println!("{}", dealt_cards)
     }
