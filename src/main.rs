@@ -11,9 +11,9 @@ struct Card<'a> {
 #[derive(Debug)]
 struct Deck<'a> {
     cards: Vec<Card<'a>>,
-    cards_in_room: Vec<Card<'a>>,
+    room: Vec<Card<'a>>,
     turn: u8,
-    skipped_at_turn: u8,
+    skip: u8,
 }
 
 impl<'a> Deck<'a> {
@@ -50,30 +50,23 @@ impl<'a> Deck<'a> {
 
         return Deck {
             cards,
-            cards_in_room: Vec::new(),
+            room: Vec::new(),
             turn: 0,
-            skipped_at_turn: 0,
+            skip: 0,
         };
     }
 
     fn deal(&mut self) {
-        if self.turn != 1 && self.skipped_at_turn != 0 {
-            if self.turn - self.skipped_at_turn == 1 {
-                println!("Can't skip two rooms in a row");
-                return;
-            }
-        }
-
-        let iterations = 4 - self.cards_in_room.len();
+        let iterations = 4 - self.room.len();
 
         self.turn += 1;
         println!("turn: {}", self.turn);
-        println!("skipped: {}", self.skipped_at_turn);
+        println!("skipped: {}", self.skip);
 
         for _ in 0..iterations {
             match self.cards.pop() {
                 Some(card) => {
-                    self.cards_in_room.push(card);
+                    self.room.push(card);
                 }
                 None => continue,
             }
@@ -81,7 +74,7 @@ impl<'a> Deck<'a> {
 
         let mut dealt_cards: Vec<String> = Vec::new();
 
-        self.cards_in_room.iter().for_each(|card| {
+        self.room.iter().for_each(|card| {
             let card_annotation = format!(" {}{} ", card.suit, card.value);
             dealt_cards.push(card_annotation);
         });
@@ -91,11 +84,21 @@ impl<'a> Deck<'a> {
         println!("{}", dealt_cards)
     }
 
+    fn can_skip(&self) -> bool {
+        if self.turn != 1 && self.skip != 0 {
+            if self.turn - self.skip == 1 {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     fn skip(&mut self) {
-        let mut iterations = self.cards_in_room.len();
+        let mut iterations = self.room.len();
 
         while iterations != 0 {
-            match self.cards_in_room.pop() {
+            match self.room.pop() {
                 Some(card) => self.cards.insert(0, card),
                 None => continue,
             }
@@ -103,7 +106,7 @@ impl<'a> Deck<'a> {
             iterations -= 1
         }
 
-        self.skipped_at_turn = self.turn;
+        self.skip = self.turn;
     }
 }
 
@@ -111,19 +114,31 @@ fn main() {
     // let mut life_points = 20;
 
     let mut deck = Deck::new();
-    let mut action = String::new();
 
-    loop {
+    'outer: loop {
         deck.deal();
-        io::stdin().read_line(&mut action).unwrap();
 
-        match action.trim() {
-            "quit" => break,
-            "skip" => {
-                deck.skip();
-                continue;
+        'inner: loop {
+            let mut action = String::new();
+            io::stdin().read_line(&mut action).unwrap();
+
+            match action.trim() {
+                "q" => break 'outer,
+                "s" => {
+                    if deck.can_skip() {
+                        println!("skipped");
+                        deck.skip();
+                        break 'inner;
+                    } else {
+                        println!("Can't skip two rooms in a row");
+                        continue;
+                    }
+                }
+                _ => {
+                    println!("what");
+                    continue;
+                }
             }
-            _ => (),
         }
     }
 }
