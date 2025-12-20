@@ -95,7 +95,7 @@ impl<'a> Deck<'a> {
         };
     }
 
-    fn tick(&mut self) {
+    fn new_turn(&mut self) {
         self.turn += 1
     }
 
@@ -342,7 +342,7 @@ fn main() {
     let mut deck = Deck::new();
 
     'outer: loop {
-        deck.tick();
+        deck.new_turn();
         deck.deal();
 
         'inner: loop {
