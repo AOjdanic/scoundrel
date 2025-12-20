@@ -1,6 +1,6 @@
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-use std::io;
+use std::{io, process};
 
 // player struct has all actions and health points
 // deck has creation and shuffling
@@ -46,6 +46,7 @@ struct Deck<'a> {
     last_skipped_turn: i8,
     health: i8,
     weapon: Weapon,
+    heal_turn: i8,
 }
 
 impl<'a> Deck<'a> {
@@ -90,6 +91,7 @@ impl<'a> Deck<'a> {
                 last_slain_monster_strength: 0,
                 strength: 0,
             },
+            heal_turn: 0,
         };
     }
 
@@ -240,7 +242,8 @@ impl<'a> Deck<'a> {
             println!(
                 "The monster is too strong, you can only fight monster that have strength less than {}",
                 weapon.last_slain_monster_strength
-            )
+            );
+            return;
         }
 
         self.update(card.strength);
@@ -252,9 +255,31 @@ impl<'a> Deck<'a> {
         self.print_room();
     }
 
-    // fn update_life(&mut self, strength: i8) {
-    //     self.health -= strength
-    // }
+    fn heal(&mut self, position: usize) {
+        let card = match self.get_card(position) {
+            Some(v) => v,
+            None => {
+                println!("No card at given position");
+                return;
+            }
+        };
+
+        if !is_potion(card) {
+            println!("You can only use potions to heal");
+            return;
+        }
+
+        if self.heal_turn != self.turn {
+            let new_health = self.health + card.strength;
+
+            self.health = if new_health > 20 { 20 } else { new_health };
+            self.heal_turn = self.turn;
+        }
+
+        let index = position - 1;
+        self.room.remove(index);
+        self.print_room();
+    }
 
     fn update(&mut self, monster_strength: i8) {
         let difference = if (self.weapon.strength - monster_strength) < 0 {
@@ -278,6 +303,10 @@ fn is_weapon(card: &Card) -> bool {
 
 fn is_monster(card: &Card) -> bool {
     return card.suit == "♠" || card.suit == "♣";
+}
+
+fn is_potion(card: &Card) -> bool {
+    return card.suit == "♥";
 }
 
 fn get_position() -> Option<usize> {
@@ -311,11 +340,10 @@ fn main() {
                         break 'inner;
                     } else {
                         println!("Can't skip two rooms in a row");
-                        continue;
                     }
                 }
                 "e" => {
-                    println!("Select the position of a weapon you want to equip");
+                    println!("Submit the position of the weapon you want to equip");
 
                     let position = match get_position() {
                         Some(v) => v,
@@ -325,7 +353,7 @@ fn main() {
                     deck.equip_weapon(position);
                 }
                 "a" => {
-                    println!("Select the monster you want to kill");
+                    println!("Submit the position of the monster you want to kill");
 
                     let position = match get_position() {
                         Some(v) => v,
@@ -333,10 +361,19 @@ fn main() {
                     };
 
                     deck.kill(position);
-                    continue;
+                }
+                "h" => {
+                    println!("Submit the position of the potion you want to use");
+
+                    let position = match get_position() {
+                        Some(v) => v,
+                        None => continue,
+                    };
+
+                    deck.heal(position);
                 }
                 "f" => {
-                    println!("Submit position of the monster you want to fight bare handed");
+                    println!("Submit the position of the monster you want to fight bare handed");
 
                     let position = match get_position() {
                         Some(v) => v,
@@ -344,12 +381,19 @@ fn main() {
                     };
 
                     deck.fight(position);
-                    continue;
                 }
                 _ => {
-                    println!("what");
-                    continue;
+                    println!("invalid action");
                 }
+            }
+
+            if deck.health <= 0 {
+                println!("You lose");
+                process::exit(0);
+            }
+
+            if deck.room.len() == 1 {
+                break 'inner;
             }
         }
     }
