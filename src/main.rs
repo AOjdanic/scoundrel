@@ -42,8 +42,8 @@ struct Weapon {
 struct Deck<'a> {
     turn: u8,
     health: u8,
-    heal_turn: u8,
-    skip_turn: u8,
+    turn_healed: u8,
+    turn_skipped: u8,
     weapon: Weapon,
     room: Vec<Card<'a>>,
     cards: Vec<Card<'a>>,
@@ -85,13 +85,13 @@ impl<'a> Deck<'a> {
             cards,
             room: Vec::new(),
             turn: 0,
-            skip_turn: 0,
+            turn_skipped: 0,
             health: 20,
             weapon: Weapon {
                 last_slain_monster_strength: 0,
                 strength: 0,
             },
-            heal_turn: 0,
+            turn_healed: 0,
         };
     }
 
@@ -110,26 +110,15 @@ impl<'a> Deck<'a> {
                 None => continue,
             }
         }
-
-        self.print_room();
-    }
-
-    fn print_room(&self) {
-        let mut dealt_cards: Vec<String> = Vec::new();
-
-        self.room.iter().for_each(|card| {
-            let card_annotation = format!(" {}{} ", card.suit, card.value);
-            dealt_cards.push(card_annotation);
-        });
-
-        let dealt_cards = dealt_cards.join(" ");
-
-        println!("{}", dealt_cards)
     }
 
     fn can_skip(&self) -> bool {
-        if self.turn != 1 && self.skip_turn != 0 {
-            if self.turn - self.skip_turn == 1 {
+        if self.room.len() < 4 {
+            return false;
+        }
+
+        if self.turn != 1 && self.turn_skipped != 0 {
+            if self.turn - self.turn_skipped == 1 {
                 return false;
             }
         }
@@ -149,16 +138,11 @@ impl<'a> Deck<'a> {
             remaining_cards_in_room -= 1
         }
 
-        self.skip_turn = self.turn;
+        self.turn_skipped = self.turn;
     }
 
     fn fight(&mut self) {
-        let position = match get_position() {
-            Some(v) => v,
-            None => return,
-        };
-
-        let card = match self.get_card(position) {
+        let (card, index) = match self.find_card() {
             Some(v) => v,
             None => {
                 println!("No monster at given position");
@@ -177,18 +161,11 @@ impl<'a> Deck<'a> {
             self.health -= card.strength;
         }
 
-        let index = (position - 1).into();
-        self.room.remove(index);
-        self.print_room();
+        self.discard_from_room(index);
     }
 
     fn equip_weapon(&mut self) {
-        let position = match get_position() {
-            Some(v) => v,
-            None => return,
-        };
-
-        let card = match self.get_card(position) {
+        let (card, index) = match self.find_card() {
             Some(v) => v,
             None => {
                 println!("Can't find weapon at that position");
@@ -206,32 +183,11 @@ impl<'a> Deck<'a> {
             last_slain_monster_strength: 0,
         };
 
-        let index = (position - 1).into();
-        self.room.remove(index);
-        self.print_room();
-    }
-
-    fn get_card(&self, position: u8) -> Option<&Card<'a>> {
-        let card: &Card;
-
-        let index: usize = (position - 1).into();
-        match self.room.get(index) {
-            Some(c) => {
-                card = c;
-            }
-            None => return None,
-        };
-
-        return Some(card);
+        self.discard_from_room(index);
     }
 
     fn kill(&mut self) {
-        let position = match get_position() {
-            Some(v) => v,
-            None => return,
-        };
-
-        let card = match self.get_card(position) {
+        let (card, index) = match self.find_card() {
             Some(v) => v,
             None => {
                 println!("No card at given position");
@@ -250,7 +206,7 @@ impl<'a> Deck<'a> {
         }
 
         if self.weapon.last_slain_monster_strength != 0
-            && card.strength > self.weapon.last_slain_monster_strength
+            && card.strength >= self.weapon.last_slain_monster_strength
         {
             println!(
                 "The monster is too strong, you can only fight monster that have strength less than {}",
@@ -260,19 +216,11 @@ impl<'a> Deck<'a> {
         }
 
         self.combat(card.strength);
-
-        let index = (position - 1).into();
-        self.room.remove(index);
-        self.print_room();
+        self.discard_from_room(index);
     }
 
     fn heal(&mut self) {
-        let position = match get_position() {
-            Some(v) => v,
-            None => return,
-        };
-
-        let card = match self.get_card(position) {
+        let (card, index) = match self.find_card() {
             Some(v) => v,
             None => {
                 println!("No card at given position");
@@ -285,16 +233,34 @@ impl<'a> Deck<'a> {
             return;
         }
 
-        if self.heal_turn != self.turn {
+        if self.turn_healed != self.turn {
             let new_health = self.health + card.strength;
 
             self.health = if new_health > 20 { 20 } else { new_health };
-            self.heal_turn = self.turn;
+            self.turn_healed = self.turn;
         }
 
-        let index = (position - 1).into();
-        self.room.remove(index);
-        self.print_room();
+        self.discard_from_room(index);
+    }
+
+    fn find_card(&self) -> Option<(&Card<'a>, usize)> {
+        let mut input = String::new();
+
+        io::stdin().read_line(&mut input).unwrap_or_else(|_| {
+            println!("Failed reading the input");
+            process::exit(1)
+        });
+
+        let position: u8 = match input.trim().parse() {
+            Ok(v) => v,
+            Err(_) => return None,
+        };
+
+        let index: usize = (position - 1).into();
+        match self.room.get(index) {
+            Some(c) => return Some((c, index)),
+            None => return None,
+        };
     }
 
     fn combat(&mut self, monster_strength: u8) {
@@ -312,6 +278,25 @@ impl<'a> Deck<'a> {
 
         self.weapon.last_slain_monster_strength = monster_strength;
     }
+
+    fn discard_from_room(&mut self, index: usize) {
+        self.room.remove(index);
+    }
+
+    fn calculate_score(&self) -> i16 {
+        if self.cards.len() == 0 {
+            return self.health.into();
+        } else {
+            let all_monsters_strength: u8 = self
+                .cards
+                .iter()
+                .filter(|card| is_monster(card))
+                .map(|card| card.strength)
+                .sum();
+
+            return all_monsters_strength.into();
+        }
+    }
 }
 
 fn is_weapon(card: &Card) -> bool {
@@ -326,18 +311,31 @@ fn is_potion(card: &Card) -> bool {
     return card.suit == "♥";
 }
 
-fn get_position() -> Option<u8> {
-    let mut position = String::new();
+fn clear_screen() {
+    print!("\x1B[2J\x1B[1;1H");
+}
 
-    io::stdin().read_line(&mut position).unwrap_or_else(|_| {
-        println!("Failed reading the input");
-        process::exit(1)
+fn print_room(deck: &Deck) {
+    let mut dealt_cards: Vec<String> = Vec::new();
+
+    deck.room.iter().for_each(|card| {
+        let card_annotation = format!(" {}{} ", card.suit, card.value);
+        dealt_cards.push(card_annotation);
     });
 
-    match position.trim().parse() {
-        Ok(v) => Some(v),
-        Err(_) => None,
-    }
+    let dealt_cards = dealt_cards.join(" ");
+
+    clear_screen();
+    println!("{}", dealt_cards);
+    println!("health: {}", deck.health);
+    println!(
+        "weapon: {} | can fight below: {}",
+        deck.weapon.strength, deck.weapon.last_slain_monster_strength
+    );
+    println!("cards in deck: {}", deck.cards.len());
+    println!("turn: {}", deck.turn);
+    println!("turn skipped: {}", deck.turn_skipped);
+    println!("turn healed: {}", deck.turn_healed);
 }
 
 fn main() {
@@ -348,6 +346,7 @@ fn main() {
         deck.deal();
 
         'inner: loop {
+            print_room(&deck);
             let mut action = String::new();
             io::stdin()
                 .read_line(&mut action)
@@ -391,6 +390,13 @@ fn main() {
 
             if deck.health <= 0 {
                 println!("You lose");
+                println!("Score: -{}", deck.calculate_score());
+                process::exit(0);
+            }
+
+            if deck.cards.len() == 0 {
+                println!("You win!");
+                println!("Score: {}", deck.calculate_score());
                 process::exit(0);
             }
 
