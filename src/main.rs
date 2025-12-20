@@ -13,7 +13,7 @@ struct Deck<'a> {
     cards: Vec<Card<'a>>,
     room: Vec<Card<'a>>,
     turn: u8,
-    skip: u8,
+    last_skipped_turn: u8,
 }
 
 impl<'a> Deck<'a> {
@@ -48,20 +48,23 @@ impl<'a> Deck<'a> {
 
         cards.shuffle(&mut rng);
 
-        return Deck {
+        return Self {
             cards,
             room: Vec::new(),
             turn: 0,
-            skip: 0,
+            last_skipped_turn: 0,
         };
+    }
+
+    fn update_turn(&mut self) {
+        self.turn += 1
     }
 
     fn deal(&mut self) {
         let iterations = 4 - self.room.len();
 
-        self.turn += 1;
         println!("turn: {}", self.turn);
-        println!("skipped: {}", self.skip);
+        println!("skipped: {}", self.last_skipped_turn);
 
         for _ in 0..iterations {
             match self.cards.pop() {
@@ -85,8 +88,8 @@ impl<'a> Deck<'a> {
     }
 
     fn can_skip(&self) -> bool {
-        if self.turn != 1 && self.skip != 0 {
-            if self.turn - self.skip == 1 {
+        if self.turn != 1 && self.last_skipped_turn != 0 {
+            if self.turn - self.last_skipped_turn == 1 {
                 return false;
             }
         }
@@ -106,7 +109,7 @@ impl<'a> Deck<'a> {
             iterations -= 1
         }
 
-        self.skip = self.turn;
+        self.last_skipped_turn = self.turn;
     }
 }
 
@@ -116,6 +119,7 @@ fn main() {
     let mut deck = Deck::new();
 
     'outer: loop {
+        deck.update_turn();
         deck.deal();
 
         'inner: loop {
