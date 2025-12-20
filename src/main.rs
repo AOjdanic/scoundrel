@@ -11,7 +11,7 @@ use std::{io, process};
 struct Card<'a> {
     suit: &'a str,
     value: &'a str,
-    strength: i8,
+    strength: u8,
 }
 
 impl<'a> Card<'a> {
@@ -34,19 +34,19 @@ impl<'a> Card<'a> {
 
 #[derive(Debug)]
 struct Weapon {
-    strength: i8,
-    last_slain_monster_strength: i8,
+    strength: u8,
+    last_slain_monster_strength: u8,
 }
 
 #[derive(Debug)]
 struct Deck<'a> {
-    cards: Vec<Card<'a>>,
-    room: Vec<Card<'a>>,
-    turn: i8,
-    skip_turn: i8,
-    health: i8,
+    turn: u8,
+    health: u8,
+    heal_turn: u8,
+    skip_turn: u8,
     weapon: Weapon,
-    heal_turn: i8,
+    room: Vec<Card<'a>>,
+    cards: Vec<Card<'a>>,
 }
 
 impl<'a> Deck<'a> {
@@ -171,9 +171,13 @@ impl<'a> Deck<'a> {
             return;
         }
 
-        self.health -= card.strength;
+        if card.strength > self.health {
+            self.health = 0
+        } else {
+            self.health -= card.strength;
+        }
 
-        let index = position - 1;
+        let index = (position - 1).into();
         self.room.remove(index);
         self.print_room();
     }
@@ -202,14 +206,15 @@ impl<'a> Deck<'a> {
             last_slain_monster_strength: 0,
         };
 
-        self.room.remove(position - 1);
+        let index = (position - 1).into();
+        self.room.remove(index);
         self.print_room();
     }
 
-    fn get_card(&self, position: usize) -> Option<&Card<'a>> {
+    fn get_card(&self, position: u8) -> Option<&Card<'a>> {
         let card: &Card;
 
-        let index = position - 1;
+        let index: usize = (position - 1).into();
         match self.room.get(index) {
             Some(c) => {
                 card = c;
@@ -254,9 +259,9 @@ impl<'a> Deck<'a> {
             return;
         }
 
-        self.update(card.strength);
+        self.combat(card.strength);
 
-        let index = position - 1;
+        let index = (position - 1).into();
         self.room.remove(index);
         self.print_room();
     }
@@ -287,19 +292,24 @@ impl<'a> Deck<'a> {
             self.heal_turn = self.turn;
         }
 
-        let index = position - 1;
+        let index = (position - 1).into();
         self.room.remove(index);
         self.print_room();
     }
 
-    fn update(&mut self, monster_strength: i8) {
-        let difference = if (self.weapon.strength - monster_strength) < 0 {
-            self.weapon.strength - monster_strength
-        } else {
-            0
-        };
+    fn combat(&mut self, monster_strength: u8) {
+        let diff;
 
-        self.health += difference;
+        if monster_strength > self.weapon.strength {
+            diff = monster_strength - self.weapon.strength;
+
+            if diff > self.health {
+                self.health = 0
+            } else {
+                self.health -= diff
+            }
+        }
+
         self.weapon.last_slain_monster_strength = monster_strength;
     }
 }
@@ -316,12 +326,13 @@ fn is_potion(card: &Card) -> bool {
     return card.suit == "♥";
 }
 
-fn get_position() -> Option<usize> {
+fn get_position() -> Option<u8> {
     let mut position = String::new();
 
-    io::stdin()
-        .read_line(&mut position)
-        .expect("Failed to read input");
+    io::stdin().read_line(&mut position).unwrap_or_else(|_| {
+        println!("Failed reading the input");
+        process::exit(1)
+    });
 
     match position.trim().parse() {
         Ok(v) => Some(v),
