@@ -155,7 +155,12 @@ impl<'a> Deck<'a> {
         self.last_skipped_turn = self.turn;
     }
 
-    fn fight(&mut self, position: usize) {
+    fn fight(&mut self) {
+        let position = match get_position() {
+            Some(v) => v,
+            None => return,
+        };
+
         let card = match self.get_card(position) {
             Some(v) => v,
             None => {
@@ -171,14 +176,17 @@ impl<'a> Deck<'a> {
 
         self.health -= card.strength;
 
-        println!("{}", self.health);
-
         let index = position - 1;
         self.room.remove(index);
         self.print_room();
     }
 
-    fn equip_weapon(&mut self, position: usize) {
+    fn equip_weapon(&mut self) {
+        let position = match get_position() {
+            Some(v) => v,
+            None => return,
+        };
+
         let card = match self.get_card(position) {
             Some(v) => v,
             None => {
@@ -188,7 +196,7 @@ impl<'a> Deck<'a> {
         };
 
         if !is_weapon(card) {
-            println!("This is not a weapon");
+            println!("Selected card is not a weapon");
             return;
         }
 
@@ -215,7 +223,12 @@ impl<'a> Deck<'a> {
         return Some(card);
     }
 
-    fn kill(&mut self, position: usize) {
+    fn kill(&mut self) {
+        let position = match get_position() {
+            Some(v) => v,
+            None => return,
+        };
+
         let card = match self.get_card(position) {
             Some(v) => v,
             None => {
@@ -248,14 +261,17 @@ impl<'a> Deck<'a> {
 
         self.update(card.strength);
 
-        println!("{}", self.health);
-
         let index = position - 1;
         self.room.remove(index);
         self.print_room();
     }
 
-    fn heal(&mut self, position: usize) {
+    fn heal(&mut self) {
+        let position = match get_position() {
+            Some(v) => v,
+            None => return,
+        };
+
         let card = match self.get_card(position) {
             Some(v) => v,
             None => {
@@ -311,19 +327,21 @@ fn is_potion(card: &Card) -> bool {
 
 fn get_position() -> Option<usize> {
     let mut position = String::new();
-    io::stdin().read_line(&mut position).unwrap();
+
+    io::stdin()
+        .read_line(&mut position)
+        .expect("Failed to read input");
 
     match position.trim().parse() {
-        Ok(v) => return Some(v),
-        Err(_) => return None,
-    };
+        Ok(v) => Some(v),
+        Err(_) => None,
+    }
 }
 
 fn main() {
     let mut deck = Deck::new();
 
     'outer: loop {
-        println!("health points: {}", deck.health);
         deck.tick();
         deck.deal();
 
@@ -334,53 +352,33 @@ fn main() {
             match action.trim() {
                 "q" => break 'outer,
                 "s" => {
-                    if deck.can_skip() {
-                        println!("skipped");
-                        deck.skip();
-                        break 'inner;
-                    } else {
+                    if !deck.can_skip() {
                         println!("Can't skip two rooms in a row");
+                        continue;
                     }
+
+                    deck.skip();
+                    break 'inner;
                 }
                 "e" => {
                     println!("Submit the position of the weapon you want to equip");
 
-                    let position = match get_position() {
-                        Some(v) => v,
-                        None => continue,
-                    };
-
-                    deck.equip_weapon(position);
+                    deck.equip_weapon();
                 }
                 "a" => {
                     println!("Submit the position of the monster you want to kill");
 
-                    let position = match get_position() {
-                        Some(v) => v,
-                        None => continue,
-                    };
-
-                    deck.kill(position);
+                    deck.kill();
                 }
                 "h" => {
                     println!("Submit the position of the potion you want to use");
 
-                    let position = match get_position() {
-                        Some(v) => v,
-                        None => continue,
-                    };
-
-                    deck.heal(position);
+                    deck.heal();
                 }
                 "f" => {
                     println!("Submit the position of the monster you want to fight bare handed");
 
-                    let position = match get_position() {
-                        Some(v) => v,
-                        None => continue,
-                    };
-
-                    deck.fight(position);
+                    deck.fight();
                 }
                 _ => {
                     println!("invalid action");
