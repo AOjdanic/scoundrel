@@ -43,7 +43,7 @@ struct Deck<'a> {
     cards: Vec<Card<'a>>,
     room: Vec<Card<'a>>,
     turn: i8,
-    last_skipped_turn: i8,
+    skip_turn: i8,
     health: i8,
     weapon: Weapon,
     heal_turn: i8,
@@ -85,7 +85,7 @@ impl<'a> Deck<'a> {
             cards,
             room: Vec::new(),
             turn: 0,
-            last_skipped_turn: 0,
+            skip_turn: 0,
             health: 20,
             weapon: Weapon {
                 last_slain_monster_strength: 0,
@@ -101,9 +101,6 @@ impl<'a> Deck<'a> {
 
     fn deal(&mut self) {
         let iterations = 4 - self.room.len();
-
-        println!("turn: {}", self.turn);
-        println!("skipped: {}", self.last_skipped_turn);
 
         for _ in 0..iterations {
             match self.cards.pop() {
@@ -131,8 +128,8 @@ impl<'a> Deck<'a> {
     }
 
     fn can_skip(&self) -> bool {
-        if self.turn != 1 && self.last_skipped_turn != 0 {
-            if self.turn - self.last_skipped_turn == 1 {
+        if self.turn != 1 && self.skip_turn != 0 {
+            if self.turn - self.skip_turn == 1 {
                 return false;
             }
         }
@@ -141,18 +138,18 @@ impl<'a> Deck<'a> {
     }
 
     fn skip(&mut self) {
-        let mut iterations = self.room.len();
+        let mut remaining_cards_in_room = self.room.len();
 
-        while iterations != 0 {
+        while remaining_cards_in_room != 0 {
             match self.room.pop() {
                 Some(card) => self.cards.insert(0, card),
                 None => continue,
             }
 
-            iterations -= 1
+            remaining_cards_in_room -= 1
         }
 
-        self.last_skipped_turn = self.turn;
+        self.skip_turn = self.turn;
     }
 
     fn fight(&mut self) {
@@ -242,19 +239,17 @@ impl<'a> Deck<'a> {
             return;
         }
 
-        let weapon: &Weapon = self.get_weapon();
-
-        if weapon.strength == 0 {
+        if self.weapon.strength == 0 {
             println!("You must equip a weapon");
             return;
         }
 
-        if weapon.last_slain_monster_strength != 0
-            && card.strength > weapon.last_slain_monster_strength
+        if self.weapon.last_slain_monster_strength != 0
+            && card.strength > self.weapon.last_slain_monster_strength
         {
             println!(
                 "The monster is too strong, you can only fight monster that have strength less than {}",
-                weapon.last_slain_monster_strength
+                self.weapon.last_slain_monster_strength
             );
             return;
         }
@@ -307,10 +302,6 @@ impl<'a> Deck<'a> {
         self.health += difference;
         self.weapon.last_slain_monster_strength = monster_strength;
     }
-
-    fn get_weapon(&self) -> &Weapon {
-        return &self.weapon;
-    }
 }
 
 fn is_weapon(card: &Card) -> bool {
@@ -347,7 +338,9 @@ fn main() {
 
         'inner: loop {
             let mut action = String::new();
-            io::stdin().read_line(&mut action).unwrap();
+            io::stdin()
+                .read_line(&mut action)
+                .expect("Should have been able to read input");
 
             match action.trim() {
                 "q" => break 'outer,
@@ -370,15 +363,15 @@ fn main() {
 
                     deck.kill();
                 }
-                "h" => {
-                    println!("Submit the position of the potion you want to use");
-
-                    deck.heal();
-                }
                 "f" => {
                     println!("Submit the position of the monster you want to fight bare handed");
 
                     deck.fight();
+                }
+                "h" => {
+                    println!("Submit the position of the potion you want to use");
+
+                    deck.heal();
                 }
                 _ => {
                     println!("invalid action");
