@@ -2,11 +2,16 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::io;
 
+// player struct has all actions and health points
+// deck has creation and shuffling
+// then there is a game struct which contains info about the game itself, the current cards in the
+// room, weapons equipped (?), last skipped turn and so on
+
 #[derive(Debug)]
 struct Card<'a> {
     suit: &'a str,
     value: &'a str,
-    strength: u8,
+    strength: i8,
 }
 
 impl<'a> Card<'a> {
@@ -16,7 +21,7 @@ impl<'a> Card<'a> {
             "Q" => 12,
             "K" => 13,
             "A" => 14,
-            v => v.parse().expect("should have been able to convert a u8"),
+            v => v.parse().expect("should have been able to convert to i8"),
         };
 
         return Card {
@@ -28,12 +33,19 @@ impl<'a> Card<'a> {
 }
 
 #[derive(Debug)]
+struct Weapon {
+    strength: i8,
+    last_slain_monster_strength: i8,
+}
+
+#[derive(Debug)]
 struct Deck<'a> {
     cards: Vec<Card<'a>>,
     room: Vec<Card<'a>>,
-    turn: u8,
-    last_skipped_turn: u8,
-    life: u8,
+    turn: i8,
+    last_skipped_turn: i8,
+    health: i8,
+    weapon: Weapon,
 }
 
 impl<'a> Deck<'a> {
@@ -73,16 +85,16 @@ impl<'a> Deck<'a> {
             room: Vec::new(),
             turn: 0,
             last_skipped_turn: 0,
-            life: 20,
+            health: 20,
+            weapon: Weapon {
+                last_slain_monster_strength: 0,
+                strength: 0,
+            },
         };
     }
 
     fn tick(&mut self) {
         self.turn += 1
-    }
-
-    fn is_monster(&self, card: &Card) -> bool {
-        return card.suit == "♠" || card.suit == "♣";
     }
 
     fn deal(&mut self) {
@@ -142,39 +154,147 @@ impl<'a> Deck<'a> {
     }
 
     fn fight(&mut self, position: usize) {
-        let card: &Card;
-
-        let index = position - 1;
-        match self.room.get(index) {
-            Some(c) => card = c,
+        let card = match self.get_card(position) {
+            Some(v) => v,
             None => {
                 println!("No monster at given position");
                 return;
             }
         };
 
-        if self.is_monster(card) == false {
-            println!("Pick a monster to fight")
+        if !is_monster(card) {
+            println!("Pick a monster to fight");
+            return;
         }
 
-        self.life -= card.strength;
+        self.health -= card.strength;
 
-        println!("{}", self.life);
+        println!("{}", self.health);
 
+        let index = position - 1;
         self.room.remove(index);
         self.print_room();
     }
 
-    fn kill(&self) {
-        unimplemented!("fight is unimplemented")
+    fn equip_weapon(&mut self, position: usize) {
+        let card = match self.get_card(position) {
+            Some(v) => v,
+            None => {
+                println!("Can't find weapon at that position");
+                return;
+            }
+        };
+
+        if !is_weapon(card) {
+            println!("This is not a weapon");
+            return;
+        }
+
+        self.weapon = Weapon {
+            strength: card.strength,
+            last_slain_monster_strength: 0,
+        };
+
+        self.room.remove(position - 1);
+        self.print_room();
     }
+
+    fn get_card(&self, position: usize) -> Option<&Card<'a>> {
+        let card: &Card;
+
+        let index = position - 1;
+        match self.room.get(index) {
+            Some(c) => {
+                card = c;
+            }
+            None => return None,
+        };
+
+        return Some(card);
+    }
+
+    fn kill(&mut self, position: usize) {
+        let card = match self.get_card(position) {
+            Some(v) => v,
+            None => {
+                println!("No card at given position");
+                return;
+            }
+        };
+
+        if !is_monster(card) {
+            println!("Pick a monster to kill");
+            return;
+        }
+
+        let weapon: &Weapon = self.get_weapon();
+
+        if weapon.strength == 0 {
+            println!("You must equip a weapon");
+            return;
+        }
+
+        if weapon.last_slain_monster_strength != 0
+            && card.strength > weapon.last_slain_monster_strength
+        {
+            println!(
+                "The monster is too strong, you can only fight monster that have strength less than {}",
+                weapon.last_slain_monster_strength
+            )
+        }
+
+        self.update(card.strength);
+
+        println!("{}", self.health);
+
+        let index = position - 1;
+        self.room.remove(index);
+        self.print_room();
+    }
+
+    // fn update_life(&mut self, strength: i8) {
+    //     self.health -= strength
+    // }
+
+    fn update(&mut self, monster_strength: i8) {
+        let difference = if (self.weapon.strength - monster_strength) < 0 {
+            self.weapon.strength - monster_strength
+        } else {
+            0
+        };
+
+        self.health += difference;
+        self.weapon.last_slain_monster_strength = monster_strength;
+    }
+
+    fn get_weapon(&self) -> &Weapon {
+        return &self.weapon;
+    }
+}
+
+fn is_weapon(card: &Card) -> bool {
+    return card.suit == "♦";
+}
+
+fn is_monster(card: &Card) -> bool {
+    return card.suit == "♠" || card.suit == "♣";
+}
+
+fn get_position() -> Option<usize> {
+    let mut position = String::new();
+    io::stdin().read_line(&mut position).unwrap();
+
+    match position.trim().parse() {
+        Ok(v) => return Some(v),
+        Err(_) => return None,
+    };
 }
 
 fn main() {
     let mut deck = Deck::new();
 
     'outer: loop {
-        println!("life points: {}", deck.life);
+        println!("health points: {}", deck.health);
         deck.tick();
         deck.deal();
 
@@ -194,20 +314,35 @@ fn main() {
                         continue;
                     }
                 }
+                "e" => {
+                    println!("Select the position of a weapon you want to equip");
+
+                    let position = match get_position() {
+                        Some(v) => v,
+                        None => continue,
+                    };
+
+                    deck.equip_weapon(position);
+                }
                 "a" => {
                     println!("Select the monster you want to kill");
-                    deck.kill();
+
+                    let position = match get_position() {
+                        Some(v) => v,
+                        None => continue,
+                    };
+
+                    deck.kill(position);
                     continue;
                 }
-                "b" => {
+                "f" => {
                     println!("Submit position of the monster you want to fight bare handed");
-                    let mut position = String::new();
-                    io::stdin().read_line(&mut position).unwrap();
 
-                    let position: usize = match position.trim().parse() {
-                        Ok(v) => v,
-                        Err(_) => continue,
+                    let position = match get_position() {
+                        Some(v) => v,
+                        None => continue,
                     };
+
                     deck.fight(position);
                     continue;
                 }
