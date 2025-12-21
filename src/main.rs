@@ -1,13 +1,9 @@
-// player struct has all actions and health points
-// deck has creation and shuffling
-// then there is a game struct which contains info about the game itself, the current cards in the
-// room, weapons equipped (?), last skipped turn and so on
-
-use scoundrel::{Deck, print_room};
+use scoundrel::{Config, Deck, print_room};
 use std::{io, process};
 
 fn main() {
-    let mut deck = Deck::new();
+    let config = build_config();
+    let mut deck = Deck::new(&config);
 
     'outer: loop {
         deck.new_turn();
@@ -73,4 +69,15 @@ fn main() {
             }
         }
     }
+}
+
+fn build_config() -> Config {
+    return Config {
+        suits: vec!["♠", "♥", "♦", "♣"],
+        values: vec![
+            "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K",
+        ],
+        excluded_suits: vec!["♥", "♦"],
+        excluded_values: vec!["A", "J", "Q", "K"],
+    };
 }

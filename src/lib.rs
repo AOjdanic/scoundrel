@@ -3,14 +3,14 @@ use rand::thread_rng;
 use std::{io, process};
 
 #[derive(Debug)]
-pub struct Card<'a> {
-    pub suit: &'a str,
-    pub value: &'a str,
+pub struct Card {
+    pub suit: &'static str,
+    pub value: &'static str,
     pub strength: u8,
 }
 
-impl<'a> Card<'a> {
-    pub fn new(suit: &'a str, value: &'a str) -> Self {
+impl Card {
+    pub fn new(suit: &'static str, value: &'static str) -> Self {
         let strength = match value {
             "J" => 11,
             "Q" => 12,
@@ -34,32 +34,29 @@ pub struct Weapon {
 }
 
 #[derive(Debug)]
-pub struct Deck<'a> {
+pub struct Deck {
     pub turn: u8,
     pub health: u8,
     pub turn_healed: u8,
     pub turn_skipped: u8,
     pub weapon: Weapon,
-    pub room: Vec<Card<'a>>,
-    pub cards: Vec<Card<'a>>,
+    pub room: Vec<Card>,
+    pub cards: Vec<Card>,
 }
 
-impl<'a> Deck<'a> {
-    const SUITS: [&'static str; 4] = ["♠", "♥", "♦", "♣"];
+pub struct Config {
+    pub suits: Vec<&'static str>,
+    pub values: Vec<&'static str>,
+    pub excluded_suits: Vec<&'static str>,
+    pub excluded_values: Vec<&'static str>,
+}
 
-    const VALUES: [&'static str; 13] = [
-        "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K",
-    ];
+impl<'a> Deck {
+    pub fn new(config: &'a Config) -> Deck {
+        let mut cards: Vec<Card> = Vec::new();
 
-    const EXCLUDED_VALUES: [&'static str; 4] = ["A", "J", "Q", "K"];
-
-    const EXCLUDED_SUITS: [&'static str; 2] = ["♥", "♦"];
-
-    pub fn new() -> Deck<'a> {
-        let mut cards: Vec<Card<'a>> = Vec::new();
-
-        for suit in Self::SUITS {
-            for value in Self::VALUES {
+        for suit in &config.suits {
+            for value in &config.values {
                 cards.push(Card::new(suit, value));
             }
         }
@@ -67,8 +64,8 @@ impl<'a> Deck<'a> {
         let mut cards: Vec<Card> = cards
             .into_iter()
             .filter(|card| {
-                return !(Self::EXCLUDED_SUITS.contains(&card.suit)
-                    && Self::EXCLUDED_VALUES.contains(&card.value));
+                return !(config.excluded_suits.contains(&card.suit)
+                    && config.excluded_values.contains(&card.value));
             })
             .collect();
 
@@ -238,7 +235,7 @@ impl<'a> Deck<'a> {
         self.discard_from_room(index);
     }
 
-    fn find_card(&self) -> Option<(&Card<'a>, usize)> {
+    fn find_card(&self) -> Option<(&Card, usize)> {
         let mut input = String::new();
 
         io::stdin().read_line(&mut input).unwrap_or_else(|_| {
