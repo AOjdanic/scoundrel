@@ -19,7 +19,7 @@ impl Card {
             v => v.parse().expect("should have been able to convert to i8"),
         };
 
-        return Card {
+        return Self {
             suit,
             value,
             strength,
@@ -52,7 +52,7 @@ pub struct Config {
 }
 
 impl<'a> Deck {
-    pub fn new(config: &'a Config) -> Deck {
+    pub fn new(config: &'a Config) -> Self {
         let mut cards: Vec<Card> = Vec::new();
 
         for suit in &config.suits {

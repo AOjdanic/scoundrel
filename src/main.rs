@@ -9,6 +9,12 @@ fn main() {
         deck.new_turn();
         deck.deal();
 
+        if deck.cards.len() == 0 {
+            println!("You win!");
+            println!("Score: {}", deck.calculate_score());
+            process::exit(0);
+        }
+
         'inner: loop {
             print_room(&deck);
             let mut action = String::new();
@@ -55,12 +61,6 @@ fn main() {
             if deck.health <= 0 {
                 println!("You lose");
                 println!("Score: -{}", deck.calculate_score());
-                process::exit(0);
-            }
-
-            if deck.cards.len() == 0 {
-                println!("You win!");
-                println!("Score: {}", deck.calculate_score());
                 process::exit(0);
             }
 
