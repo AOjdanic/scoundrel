@@ -1,5 +1,9 @@
-use scoundrel::{Deck, print_room};
+use scoundrel::Deck;
 use std::{io, process};
+
+use crate::ui::print_room;
+
+pub mod ui;
 
 fn main() {
     let mut deck = Deck::new();

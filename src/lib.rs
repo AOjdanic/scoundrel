@@ -23,13 +23,6 @@ pub struct Deck {
     pub cards: Vec<Card>,
 }
 
-pub struct Config {
-    pub suits: Vec<Suit>,
-    pub ranks: Vec<Rank>,
-    pub excluded_suits: Vec<Suit>,
-    pub excluded_ranks: Vec<Rank>,
-}
-
 impl<'a> Deck {
     pub fn new() -> Self {
         let mut cards: Vec<Card> = Vec::new();
@@ -290,31 +283,4 @@ impl<'a> Deck {
             return all_monsters_strength.into();
         }
     }
-}
-
-fn clear_screen() {
-    print!("\x1B[2J\x1B[1;1H");
-}
-
-pub fn print_room(deck: &Deck) {
-    let mut dealt_cards: Vec<String> = Vec::new();
-
-    deck.room.iter().for_each(|card| {
-        let card_annotation = format!(" {:?}{:?} ", card.suit, card.rank);
-        dealt_cards.push(card_annotation);
-    });
-
-    let dealt_cards = dealt_cards.join(" ");
-
-    clear_screen();
-    println!("{}", dealt_cards);
-    println!("health: {}", deck.health);
-    println!(
-        "weapon: {} | can fight below: {}",
-        deck.weapon.strength, deck.weapon.last_slain_monster_strength
-    );
-    println!("cards in deck: {}", deck.cards.len());
-    println!("turn: {}", deck.turn);
-    println!("turn skipped: {}", deck.turn_skipped);
-    println!("turn healed: {}", deck.turn_healed);
 }
