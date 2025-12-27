@@ -2,7 +2,7 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::{io, process};
 
-use crate::card::{Card, Rank, Suit};
+use crate::card::{Card, CardKind, Rank, Suit};
 
 pub mod card;
 
@@ -31,22 +31,44 @@ pub struct Config {
 }
 
 impl<'a> Deck {
-    pub fn new(config: &'a Config) -> Self {
+    pub fn new() -> Self {
         let mut cards: Vec<Card> = Vec::new();
 
-        for suit in &config.suits {
-            for value in &config.ranks {
-                cards.push(Card::new(suit, value));
+        for suit in [Suit::Spades, Suit::Clubs] {
+            for rank in [
+                Rank::Jack,
+                Rank::Queen,
+                Rank::King,
+                Rank::Ace,
+                Rank::Num(2),
+                Rank::Num(3),
+                Rank::Num(4),
+                Rank::Num(5),
+                Rank::Num(6),
+                Rank::Num(7),
+                Rank::Num(8),
+                Rank::Num(9),
+                Rank::Num(10),
+            ] {
+                cards.push(Card::new(suit, rank));
             }
         }
 
-        let mut cards: Vec<Card> = cards
-            .into_iter()
-            .filter(|card| {
-                return !(config.excluded_suits.contains(&card.suit)
-                    && config.excluded_values.contains(&card.value));
-            })
-            .collect();
+        for suit in [Suit::Diamonds, Suit::Hearts] {
+            for rank in [
+                Rank::Num(2),
+                Rank::Num(3),
+                Rank::Num(4),
+                Rank::Num(5),
+                Rank::Num(6),
+                Rank::Num(7),
+                Rank::Num(8),
+                Rank::Num(9),
+                Rank::Num(10),
+            ] {
+                cards.push(Card::new(suit, rank));
+            }
+        }
 
         let mut rng = thread_rng();
 
@@ -121,7 +143,7 @@ impl<'a> Deck {
             }
         };
 
-        if !is_monster(card) {
+        if matches!(card.kind, CardKind::Monster) == false {
             println!("Pick a monster to fight");
             return;
         }
@@ -144,7 +166,7 @@ impl<'a> Deck {
             }
         };
 
-        if !is_weapon(card) {
+        if matches!(card.kind, CardKind::Weapon) == false {
             println!("Selected card is not a weapon");
             return;
         }
@@ -166,7 +188,7 @@ impl<'a> Deck {
             }
         };
 
-        if !is_monster(card) {
+        if matches!(card.kind, CardKind::Monster) == false {
             println!("Pick a monster to kill");
             return;
         }
@@ -199,7 +221,7 @@ impl<'a> Deck {
             }
         };
 
-        if !is_potion(card) {
+        if matches!(card.kind, CardKind::Potion) == false {
             println!("You can only use potions to heal");
             return;
         }
@@ -261,25 +283,13 @@ impl<'a> Deck {
             let all_monsters_strength: u8 = self
                 .cards
                 .iter()
-                .filter(|card| is_monster(card))
+                .filter(|card| matches!(card.kind, CardKind::Monster))
                 .map(|card| card.strength)
                 .sum();
 
             return all_monsters_strength.into();
         }
     }
-}
-
-fn is_weapon(card: &Card) -> bool {
-    return card.suit == "♦";
-}
-
-fn is_monster(card: &Card) -> bool {
-    return card.suit == "♠" || card.suit == "♣";
-}
-
-fn is_potion(card: &Card) -> bool {
-    return card.suit == "♥";
 }
 
 fn clear_screen() {
@@ -290,7 +300,7 @@ pub fn print_room(deck: &Deck) {
     let mut dealt_cards: Vec<String> = Vec::new();
 
     deck.room.iter().for_each(|card| {
-        let card_annotation = format!(" {}{} ", card.suit, card.value);
+        let card_annotation = format!(" {:?}{:?} ", card.suit, card.rank);
         dealt_cards.push(card_annotation);
     });
 
@@ -307,49 +317,4 @@ pub fn print_room(deck: &Deck) {
     println!("turn: {}", deck.turn);
     println!("turn skipped: {}", deck.turn_skipped);
     println!("turn healed: {}", deck.turn_healed);
-}
-
-// const SUITS: [&'static str; 4] = ["♠", "♥", "♦", "♣"];
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn is_monster_test() {
-        let monster_card_one = Card::new("♠", "11");
-        let monster_card_two = Card::new("♣", "2");
-        let potion_card = Card::new("♥", "2");
-        let weapon_card = Card::new("♦", "5");
-
-        assert_eq!(is_monster(&potion_card), false);
-        assert_eq!(is_monster(&weapon_card), false);
-        assert_eq!(is_monster(&monster_card_one), true);
-        assert_eq!(is_monster(&monster_card_two), true);
-    }
-
-    #[test]
-    fn is_weapon_test() {
-        let monster_card_one = Card::new("♠", "11");
-        let monster_card_two = Card::new("♣", "2");
-        let potion_card = Card::new("♥", "2");
-        let weapon_card = Card::new("♦", "5");
-
-        assert_eq!(is_weapon(&weapon_card), true);
-        assert_eq!(is_weapon(&potion_card), false);
-        assert_eq!(is_weapon(&monster_card_one), false);
-        assert_eq!(is_weapon(&monster_card_two), false);
-    }
-
-    #[test]
-    fn is_potion_test() {
-        let monster_card_one = Card::new("♠", "11");
-        let monster_card_two = Card::new("♣", "2");
-        let potion_card = Card::new("♥", "2");
-        let weapon_card = Card::new("♦", "5");
-
-        assert_eq!(is_potion(&potion_card), true);
-        assert_eq!(is_potion(&weapon_card), false);
-        assert_eq!(is_potion(&monster_card_one), false);
-        assert_eq!(is_potion(&monster_card_two), false);
-    }
 }

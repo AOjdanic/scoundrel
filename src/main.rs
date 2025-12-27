@@ -1,9 +1,8 @@
-use scoundrel::{Config, Deck, print_room};
+use scoundrel::{Deck, print_room};
 use std::{io, process};
 
 fn main() {
-    let config = build_config();
-    let mut deck = Deck::new(&config);
+    let mut deck = Deck::new();
 
     'outer: loop {
         deck.new_turn();
@@ -69,15 +68,4 @@ fn main() {
             }
         }
     }
-}
-
-fn build_config() -> Config {
-    return Config {
-        suits: vec!["♠", "♥", "♦", "♣"],
-        values: vec![
-            "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K",
-        ],
-        excluded_suits: vec!["♥", "♦"],
-        excluded_values: vec!["A", "J", "Q", "K"],
-    };
 }

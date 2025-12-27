@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Suit {
     Spades,
     Hearts,
@@ -6,7 +6,7 @@ pub enum Suit {
     Diamonds,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Rank {
     Num(u8),
     Jack,
@@ -15,7 +15,7 @@ pub enum Rank {
     Ace,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum CardKind {
     Monster,
     Weapon,
