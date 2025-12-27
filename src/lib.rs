@@ -2,30 +2,9 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::{io, process};
 
-#[derive(Debug)]
-pub struct Card {
-    pub suit: &'static str,
-    pub value: &'static str,
-    pub strength: u8,
-}
+use crate::card::{Card, Rank, Suit};
 
-impl Card {
-    pub fn new(suit: &'static str, value: &'static str) -> Self {
-        let strength = match value {
-            "J" => 11,
-            "Q" => 12,
-            "K" => 13,
-            "A" => 14,
-            v => v.parse().expect("should have been able to convert to i8"),
-        };
-
-        return Self {
-            suit,
-            value,
-            strength,
-        };
-    }
-}
+pub mod card;
 
 #[derive(Debug)]
 pub struct Weapon {
@@ -45,10 +24,10 @@ pub struct Deck {
 }
 
 pub struct Config {
-    pub suits: Vec<&'static str>,
-    pub values: Vec<&'static str>,
-    pub excluded_suits: Vec<&'static str>,
-    pub excluded_values: Vec<&'static str>,
+    pub suits: Vec<Suit>,
+    pub ranks: Vec<Rank>,
+    pub excluded_suits: Vec<Suit>,
+    pub excluded_ranks: Vec<Rank>,
 }
 
 impl<'a> Deck {
@@ -56,7 +35,7 @@ impl<'a> Deck {
         let mut cards: Vec<Card> = Vec::new();
 
         for suit in &config.suits {
-            for value in &config.values {
+            for value in &config.ranks {
                 cards.push(Card::new(suit, value));
             }
         }
