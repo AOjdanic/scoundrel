@@ -185,7 +185,11 @@ impl<'a> Deck {
             return Err(GameError::MonsterTooStrongForWeapon);
         }
 
-        self.combat(card.strength);
+        if card.strength > self.weapon.strength {
+            self.health -= (card.strength - self.weapon.strength).min(self.health);
+        }
+
+        self.weapon.last_slain_monster_strength = card.strength;
         self.room.remove(index);
 
         Ok(())
@@ -199,31 +203,13 @@ impl<'a> Deck {
         }
 
         if self.turn_healed != self.turn {
-            let new_health = self.health + card.strength;
-
-            self.health = if new_health > 20 { 20 } else { new_health };
+            self.health = (self.health + card.strength).min(20);
             self.turn_healed = self.turn;
         }
 
         self.room.remove(index);
 
         Ok(())
-    }
-
-    fn combat(&mut self, monster_strength: u8) {
-        let diff;
-
-        if monster_strength > self.weapon.strength {
-            diff = monster_strength - self.weapon.strength;
-
-            if diff > self.health {
-                self.health = 0
-            } else {
-                self.health -= diff
-            }
-        }
-
-        self.weapon.last_slain_monster_strength = monster_strength;
     }
 
     pub fn calculate_score(&self) -> i16 {

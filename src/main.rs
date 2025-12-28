@@ -37,32 +37,24 @@ fn main() -> Result<(), Box<dyn Error>> {
                 }
 
                 Action::Equip { index } => {
-                    println!("Submit the position of the weapon you want to equip");
-
                     if let Err(e) = deck.equip_weapon(index) {
                         println!("Error: {:?}", e);
                     }
                 }
 
                 Action::Kill { index } => {
-                    println!("Submit the position of the monster you want to kill");
-
                     if let Err(e) = deck.kill(index) {
                         println!("Error: {:?}", e)
                     }
                 }
 
                 Action::Fight { index } => {
-                    println!("Submit the position of the monster you want to fight bare handed");
-
                     if let Err(e) = deck.fight(index) {
                         println!("Error: {:?}", e)
                     }
                 }
 
                 Action::Heal { index } => {
-                    println!("Submit the position of the potion you want to use");
-
                     if let Err(e) = deck.heal(index) {
                         println!("Error: {:?}", e)
                     }

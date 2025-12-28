@@ -59,14 +59,16 @@ fn parse_index(value: Option<&str>) -> Result<usize, Box<dyn Error>> {
 }
 
 pub fn parse_action(input: &str) -> Result<Action, Box<dyn Error>> {
-    let iter = input.to_lowercase();
-    let mut iter = iter.trim().split_whitespace();
+    let lower = input.to_lowercase();
+    let mut iter = lower.trim().split_whitespace();
 
     let command = iter.next().ok_or("Empty Input")?;
 
     match command {
         "q" => Ok(Action::Quit),
+
         "s" => Ok(Action::Skip),
+
         "f" => {
             let index = parse_index(iter.next())?;
 
