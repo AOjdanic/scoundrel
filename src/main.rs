@@ -47,7 +47,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 Action::Fight { index } => {
                     println!("Submit the position of the monster you want to fight bare handed");
 
-                    deck.fight();
+                    deck.fight(index);
                 }
                 Action::Heal { index } => {
                     println!("Submit the position of the potion you want to use");

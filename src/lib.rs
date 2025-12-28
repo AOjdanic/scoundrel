@@ -23,6 +23,11 @@ pub struct Deck {
     pub cards: Vec<Card>,
 }
 
+pub enum GameError {
+    IndexOutOfBounds,
+    NotAMonster,
+}
+
 impl<'a> Deck {
     pub fn new() -> Self {
         let mut cards: Vec<Card> = Vec::new();
@@ -127,27 +132,19 @@ impl<'a> Deck {
         self.turn_skipped = self.turn;
     }
 
-    pub fn fight(&mut self) {
-        let (card, index) = match self.find_card() {
-            Some(v) => v,
-            None => {
-                println!("No monster at given position");
-                return;
-            }
-        };
+    pub fn fight(&mut self, index: usize) -> Result<(), GameError> {
+        let card = self.room.get(index).ok_or(GameError::IndexOutOfBounds)?;
 
-        if matches!(card.kind, CardKind::Monster) == false {
-            println!("Pick a monster to fight");
-            return;
+        if !matches!(card.kind, CardKind::Monster) {
+            return Err(GameError::NotAMonster);
         }
 
-        if card.strength > self.health {
-            self.health = 0
-        } else {
-            self.health -= card.strength;
-        }
+        let damage = card.strength.min(self.health);
+        self.health -= damage;
 
-        self.discard_from_room(index);
+        self.room.remove(index);
+
+        Ok(())
     }
 
     pub fn equip_weapon(&mut self) {
