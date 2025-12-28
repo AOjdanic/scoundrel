@@ -1,6 +1,5 @@
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-use std::{io, process};
 
 use crate::card::{Card, CardKind, Rank, Suit};
 
@@ -23,9 +22,14 @@ pub struct Deck {
     pub cards: Vec<Card>,
 }
 
+#[derive(Debug)]
 pub enum GameError {
     IndexOutOfBounds,
     NotAMonster,
+    NotAWeapon,
+    NotAPotion,
+    NoWeaponEquipped,
+    MonsterTooStrongForWeapon,
 }
 
 impl<'a> Deck {
@@ -147,18 +151,11 @@ impl<'a> Deck {
         Ok(())
     }
 
-    pub fn equip_weapon(&mut self) {
-        let (card, index) = match self.find_card() {
-            Some(v) => v,
-            None => {
-                println!("Can't find weapon at that position");
-                return;
-            }
-        };
+    pub fn equip_weapon(&mut self, index: usize) -> Result<(), GameError> {
+        let card = self.room.get(index).ok_or(GameError::IndexOutOfBounds)?;
 
-        if matches!(card.kind, CardKind::Weapon) == false {
-            println!("Selected card is not a weapon");
-            return;
+        if !matches!(card.kind, CardKind::Weapon) {
+            return Err(GameError::NotAWeapon);
         }
 
         self.weapon = Weapon {
@@ -166,54 +163,39 @@ impl<'a> Deck {
             last_slain_monster_strength: 0,
         };
 
-        self.discard_from_room(index);
+        self.room.remove(index);
+
+        Ok(())
     }
 
-    pub fn kill(&mut self) {
-        let (card, index) = match self.find_card() {
-            Some(v) => v,
-            None => {
-                println!("No card at given position");
-                return;
-            }
-        };
+    pub fn kill(&mut self, index: usize) -> Result<(), GameError> {
+        let card = self.room.get(index).ok_or(GameError::IndexOutOfBounds)?;
 
-        if matches!(card.kind, CardKind::Monster) == false {
-            println!("Pick a monster to kill");
-            return;
+        if !matches!(card.kind, CardKind::Monster) {
+            return Err(GameError::NotAMonster);
         }
 
         if self.weapon.strength == 0 {
-            println!("You must equip a weapon");
-            return;
+            return Err(GameError::NoWeaponEquipped);
         }
 
         if self.weapon.last_slain_monster_strength != 0
             && card.strength >= self.weapon.last_slain_monster_strength
         {
-            println!(
-                "The monster is too strong, you can only fight monster that have strength less than {}",
-                self.weapon.last_slain_monster_strength
-            );
-            return;
+            return Err(GameError::MonsterTooStrongForWeapon);
         }
 
         self.combat(card.strength);
-        self.discard_from_room(index);
+        self.room.remove(index);
+
+        Ok(())
     }
 
-    pub fn heal(&mut self) {
-        let (card, index) = match self.find_card() {
-            Some(v) => v,
-            None => {
-                println!("No card at given position");
-                return;
-            }
-        };
+    pub fn heal(&mut self, index: usize) -> Result<(), GameError> {
+        let card = self.room.get(index).ok_or(GameError::IndexOutOfBounds)?;
 
-        if matches!(card.kind, CardKind::Potion) == false {
-            println!("You can only use potions to heal");
-            return;
+        if !matches!(card.kind, CardKind::Potion) {
+            return Err(GameError::NotAPotion);
         }
 
         if self.turn_healed != self.turn {
@@ -223,27 +205,9 @@ impl<'a> Deck {
             self.turn_healed = self.turn;
         }
 
-        self.discard_from_room(index);
-    }
+        self.room.remove(index);
 
-    fn find_card(&self) -> Option<(&Card, usize)> {
-        let mut input = String::new();
-
-        io::stdin().read_line(&mut input).unwrap_or_else(|_| {
-            println!("Failed reading the input");
-            process::exit(1)
-        });
-
-        let position: u8 = match input.trim().parse() {
-            Ok(v) => v,
-            Err(_) => return None,
-        };
-
-        let index: usize = (position - 1).into();
-        match self.room.get(index) {
-            Some(c) => return Some((c, index)),
-            None => return None,
-        };
+        Ok(())
     }
 
     fn combat(&mut self, monster_strength: u8) {
@@ -260,10 +224,6 @@ impl<'a> Deck {
         }
 
         self.weapon.last_slain_monster_strength = monster_strength;
-    }
-
-    fn discard_from_room(&mut self, index: usize) {
-        self.room.remove(index);
     }
 
     pub fn calculate_score(&self) -> i16 {
