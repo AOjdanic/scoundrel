@@ -1,6 +1,6 @@
 use crate::{
-    GameError,
     card::{Card, CardKind},
+    error::GameError,
 };
 
 #[derive(Debug)]

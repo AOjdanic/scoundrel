@@ -1,4 +1,4 @@
-use crate::{GameError, card::Card};
+use crate::{card::Card, error::GameError};
 
 pub struct Room {
     cards: Vec<Card>,
