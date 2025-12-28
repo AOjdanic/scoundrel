@@ -4,7 +4,7 @@ use crate::card::{Card, CardKind, Rank, Suit};
 
 #[derive(Debug)]
 pub struct Deck {
-    pub cards: Vec<Card>,
+    cards: Vec<Card>,
 }
 
 impl<'a> Deck {
@@ -61,6 +61,10 @@ impl<'a> Deck {
 
     pub fn draw(&mut self) -> Option<Card> {
         self.cards.pop()
+    }
+
+    pub fn cards_mut(&mut self) -> &mut Vec<Card> {
+        return &mut self.cards;
     }
 
     pub fn put_on_bottom(&mut self, card: Card) {

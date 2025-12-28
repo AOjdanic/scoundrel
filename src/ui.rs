@@ -1,32 +1,35 @@
 use std::{error::Error, io};
 
-use scoundrel::Deck;
+use crate::game::{Action, GameOutcome};
 
 fn clear_screen() {
     print!("\x1B[2J\x1B[1;1H");
 }
 
-pub fn print_room(deck: &Deck) {
-    let mut dealt_cards: Vec<String> = Vec::new();
-
-    deck.room.iter().for_each(|card| {
-        let card_annotation = format!(" {:?}{:?} ", card.suit, card.rank);
-        dealt_cards.push(card_annotation);
-    });
-
-    let dealt_cards = dealt_cards.join(" ");
+pub fn print_room() {
+    // let mut dealt_cards: Vec<String> = Vec::new();
+    //
+    // deck.room.iter().for_each(|card| {
+    //     let card_annotation = format!(" {:?}{:?} ", card.suit, card.rank);
+    //     dealt_cards.push(card_annotation);
+    // });
+    //
+    // let dealt_cards = dealt_cards.join(" ");
+    //
+    // clear_screen();
+    // println!("{}", dealt_cards);
+    // println!("health: {}", deck.health);
+    // println!(
+    //     "weapon: {} | can fight below: {}",
+    //     deck.weapon.strength, deck.weapon.last_slain_monster_strength
+    // );
+    // println!("cards in deck: {}", deck.cards.len());
+    // println!("turn: {}", deck.turn);
+    // println!("turn skipped: {}", deck.turn_skipped);
+    // println!("turn healed: {}", deck.turn_healed);
 
     clear_screen();
-    println!("{}", dealt_cards);
-    println!("health: {}", deck.health);
-    println!(
-        "weapon: {} | can fight below: {}",
-        deck.weapon.strength, deck.weapon.last_slain_monster_strength
-    );
-    println!("cards in deck: {}", deck.cards.len());
-    println!("turn: {}", deck.turn);
-    println!("turn skipped: {}", deck.turn_skipped);
-    println!("turn healed: {}", deck.turn_healed);
+    unimplemented!()
 }
 
 pub fn read_input() -> Result<String, Box<dyn Error>> {
@@ -35,15 +38,6 @@ pub fn read_input() -> Result<String, Box<dyn Error>> {
     io::stdin().read_line(&mut action)?;
 
     return Ok(action.trim().to_string());
-}
-
-pub enum Action {
-    Quit,
-    Skip,
-    Kill { index: usize },
-    Heal { index: usize },
-    Fight { index: usize },
-    Equip { index: usize },
 }
 
 fn parse_index(value: Option<&str>) -> Result<usize, Box<dyn Error>> {
@@ -94,5 +88,18 @@ pub fn parse_action(input: &str) -> Result<Action, Box<dyn Error>> {
         }
 
         _ => Err("Unknown command".into()),
+    }
+}
+
+pub fn print_outcome(outcome: GameOutcome) {
+    match outcome {
+        GameOutcome::Win { score } => {
+            println!("You win!");
+            println!("Score: {}", score);
+        }
+        GameOutcome::Lose { score } => {
+            println!("You lose!");
+            println!("Score: {}", score);
+        }
     }
 }
