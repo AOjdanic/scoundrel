@@ -24,10 +24,10 @@ pub struct Deck {
 
 #[derive(Debug)]
 pub enum GameError {
-    IndexOutOfBounds,
-    NotAMonster,
     NotAWeapon,
     NotAPotion,
+    NotAMonster,
+    IndexOutOfBounds,
     NoWeaponEquipped,
     MonsterTooStrongForWeapon,
 }
