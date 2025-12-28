@@ -1,11 +1,11 @@
 use scoundrel::Deck;
-use std::{io, process};
+use std::{error::Error, process};
 
-use crate::ui::print_room;
+use crate::ui::{Action, parse_action, print_room, read_input};
 
 pub mod ui;
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let mut deck = Deck::new();
 
     'outer: loop {
@@ -20,14 +20,12 @@ fn main() {
 
         'inner: loop {
             print_room(&deck);
-            let mut action = String::new();
-            io::stdin()
-                .read_line(&mut action)
-                .expect("Should have been able to read input");
+            let input = read_input()?;
+            let action = parse_action(&input)?;
 
-            match action.trim() {
-                "q" => break 'outer,
-                "s" => {
+            match action {
+                Action::Quit => break 'outer Ok(()),
+                Action::Skip => {
                     if !deck.can_skip() {
                         println!("Can't skip two rooms in a row");
                         continue;
@@ -36,22 +34,22 @@ fn main() {
                     deck.skip();
                     break 'inner;
                 }
-                "e" => {
+                Action::Equip { index } => {
                     println!("Submit the position of the weapon you want to equip");
 
                     deck.equip_weapon();
                 }
-                "a" => {
+                Action::Kill { index } => {
                     println!("Submit the position of the monster you want to kill");
 
                     deck.kill();
                 }
-                "f" => {
+                Action::Fight { index } => {
                     println!("Submit the position of the monster you want to fight bare handed");
 
                     deck.fight();
                 }
-                "h" => {
+                Action::Heal { index } => {
                     println!("Submit the position of the potion you want to use");
 
                     deck.heal();
