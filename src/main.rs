@@ -1,4 +1,4 @@
-use scoundrel::Deck;
+use scoundrel::{deck::Deck, player::Player, room::Room};
 use std::{error::Error, process};
 
 use crate::ui::{Action, parse_action, print_room, read_input};
@@ -7,6 +7,8 @@ pub mod ui;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut deck = Deck::new();
+    let mut room = Room::new();
+    let mut player = Player::new();
 
     'outer: loop {
         deck.new_turn();
@@ -37,27 +39,39 @@ fn main() -> Result<(), Box<dyn Error>> {
                 }
 
                 Action::Equip { index } => {
-                    if let Err(e) = deck.equip_weapon(index) {
-                        println!("Error: {:?}", e);
-                    }
+                    let card = room.get(index)?;
+                    player.equip_weapon(card)?;
+                    room.remove(index)?;
+                    // if let Err(e) = deck.equip_weapon(index) {
+                    //     println!("Error: {:?}", e);
+                    // }
                 }
 
                 Action::Kill { index } => {
-                    if let Err(e) = deck.kill(index) {
-                        println!("Error: {:?}", e)
-                    }
+                    let card = room.get(index)?;
+                    player.kill(card)?;
+                    room.remove(index)?;
+                    // if let Err(e) = deck.kill(index) {
+                    //     println!("Error: {:?}", e)
+                    // }
                 }
 
                 Action::Fight { index } => {
-                    if let Err(e) = deck.fight(index) {
-                        println!("Error: {:?}", e)
-                    }
+                    let card = room.get(index)?;
+                    player.fight(card)?;
+                    room.remove(index)?;
+                    // if let Err(e) = deck.fight(index) {
+                    //     println!("Error: {:?}", e)
+                    // }
                 }
 
                 Action::Heal { index } => {
-                    if let Err(e) = deck.heal(index) {
-                        println!("Error: {:?}", e)
-                    }
+                    let card = room.get(index)?;
+                    player.heal(card)?;
+                    room.remove(index)?;
+                    // if let Err(e) = deck.heal(index) {
+                    //     println!("Error: {:?}", e)
+                    // }
                 }
             }
 
