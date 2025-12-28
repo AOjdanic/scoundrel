@@ -47,16 +47,11 @@ impl<'a> Deck {
             }
         }
 
-        let mut deck = Self { cards };
-        deck.shuffle();
-
-        return deck;
-    }
-
-    pub fn shuffle(&mut self) {
         let mut rng = thread_rng();
 
-        self.cards.shuffle(&mut rng);
+        cards.shuffle(&mut rng);
+
+        return Self { cards };
     }
 
     pub fn draw(&mut self) -> Option<Card> {
@@ -73,6 +68,10 @@ impl<'a> Deck {
 
     pub fn is_empty(&self) -> bool {
         return self.cards.is_empty();
+    }
+
+    pub fn len(&self) -> usize {
+        return self.cards.len();
     }
 
     pub fn remaining_monster_strength(&self) -> u8 {

@@ -3,7 +3,7 @@ use scoundrel::{
     ui::{parse_action, print_outcome, print_room, read_input},
 };
 
-use std::error::Error;
+use std::{error::Error, process};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut game = Game::new();
@@ -12,13 +12,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         game.start_turn();
 
         'inner: loop {
-            print_room();
+            print_room(game.room());
             let input = read_input()?;
             let action = parse_action(&input)?;
 
             match game.apply(action) {
                 Ok(GameEvent::TurnEnded) => break 'inner,
-                Ok(_) => {}
+                Ok(GameEvent::ActionApplied) => continue,
+                Ok(GameEvent::QuitGame) => process::exit(0),
                 Err(e) => println!("{:?}", e),
             }
 

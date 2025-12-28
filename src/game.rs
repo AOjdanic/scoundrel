@@ -10,8 +10,8 @@ pub enum Action {
 }
 
 pub enum GameEvent {
+    QuitGame,
     TurnEnded,
-    RoomSkipped,
     ActionApplied,
 }
 
@@ -52,10 +52,7 @@ impl Game {
 
     pub fn apply(&mut self, action: Action) -> Result<GameEvent, GameError> {
         match action {
-            Action::Quit => {
-                self.player.health = 0;
-                Ok(GameEvent::TurnEnded)
-            }
+            Action::Quit => Ok(GameEvent::QuitGame),
 
             Action::Skip => {
                 if !self.can_skip() {
