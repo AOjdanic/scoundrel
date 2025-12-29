@@ -12,15 +12,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         game.start_turn();
 
         'inner: loop {
-            print_room(game.room());
+            print_room(&game);
             let input = read_input()?;
             let action = parse_action(&input)?;
 
             match game.apply(action) {
                 Ok(GameEvent::TurnEnded) => break 'inner,
-                Ok(GameEvent::ActionApplied) => continue,
+                Ok(GameEvent::ActionApplied) => {}
                 Ok(GameEvent::QuitGame) => process::exit(0),
-                Err(e) => println!("{:?}", e),
+                Err(e) => println!("{}", e),
             }
 
             if game.is_over() {

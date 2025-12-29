@@ -1,17 +1,17 @@
 use std::{error::Error, io};
 
-use crate::{
-    game::{Action, GameOutcome},
-    room::Room,
-};
+use crate::game::{Action, Game, GameOutcome};
 
 // fn clear_screen() {
 //     print!("\x1B[2J\x1B[1;1H");
 // }
 
-pub fn print_room(room: &Room) {
+pub fn print_room(game: &Game) {
+    let room = game.room();
+    let health = game.player().health;
     room.iter()
         .for_each(|card| println!("{:?}{:?}", card.suit, card.rank));
+    println!("{health}");
 }
 
 pub fn read_input() -> Result<String, Box<dyn Error>> {
