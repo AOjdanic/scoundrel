@@ -84,22 +84,95 @@ impl Printer {
     }
 
     pub fn print_room(game_info: GameInfo) {
-        let mut index = 0;
-        game_info.room_cards.iter().for_each(|card| {
-            index += 1;
-            print!("{}) {}   ", index, card)
-        });
-        print!("\n");
-        println!("health: {}", game_info.health);
-        println!("cards in deck: {}", game_info.remaining_cards);
-        println!(
-            "weapon: {}, last slain: {}",
-            game_info.weapon_strength, game_info.last_slain
-        );
-        println!(
-            "turn: {}, turn skipped: {}",
-            game_info.turn, game_info.last_skipped
-        );
+        const TOTAL_WIDTH: usize = 78;
+        const CARD_AREA_WIDTH: usize = 53;
+        const CARD_WIDTH: usize = 9;
+        const INNER_WIDTH: usize = CARD_WIDTH - 2;
+        const CARD_GAP: &str = " ";
+        const DECK_GAP: &str = "    ";
+
+        let center = |s: &str, width: usize| {
+            let len = s.chars().count();
+            if len >= width {
+                s.to_string()
+            } else {
+                let pad = width - len;
+                format!("{}{}{}", " ".repeat(pad / 2), s, " ".repeat(pad - pad / 2))
+            }
+        };
+
+        let room_cards: Vec<String> = game_info.room_cards.iter().map(|c| c.to_string()).collect();
+
+        // ----- Card area (6 rows) -----
+        let mut card_lines = vec![String::new(); 6];
+
+        // Deck
+        card_lines[0].push_str("+-------+");
+        card_lines[1].push_str("|       |");
+        card_lines[2].push_str(&format!(
+            "|{}|",
+            center(&game_info.remaining_cards.to_string(), INNER_WIDTH)
+        ));
+        card_lines[3].push_str("|       |");
+        card_lines[4].push_str("+-------+");
+        card_lines[5].push_str("         ");
+
+        for line in &mut card_lines {
+            line.push_str(DECK_GAP);
+        }
+
+        // Room cards
+        for (idx, card) in room_cards.iter().enumerate() {
+            card_lines[0].push_str("+-------+");
+            card_lines[1].push_str("|       |");
+            card_lines[2].push_str(&format!("|{}|", center(card, INNER_WIDTH)));
+            card_lines[3].push_str("|       |");
+            card_lines[4].push_str("+-------+");
+            card_lines[5].push_str(&center(&(idx + 1).to_string(), CARD_WIDTH));
+
+            for line in &mut card_lines {
+                line.push_str(CARD_GAP);
+            }
+        }
+
+        // ----- Stats: one per row, RIGHT-ALIGNED -----
+        let stats = [
+            format!("♡ {:>2}", game_info.health),
+            format!("↺ {:>2}", game_info.turn),
+            format!("⏭ {:>2}", game_info.last_skipped),
+            format!("⚔ {:>2}", game_info.weapon_strength),
+            format!("🥊{:>2}", game_info.last_slain),
+            String::new(),
+        ];
+
+        // ===== RENDER =====
+        println!("{:-<81}", "");
+        for i in 0..card_lines.len() {
+            if i == card_lines.len() - 2 {
+                let left = format!("{:<CARD_AREA_WIDTH$}", card_lines[i]);
+                let right = format!(
+                    "{:>width$}",
+                    stats[i],
+                    width = TOTAL_WIDTH - CARD_AREA_WIDTH - 1
+                );
+                println!("|{}{} |", left, right);
+            } else {
+                let left = format!("{:<CARD_AREA_WIDTH$}", card_lines[i]);
+                let right = format!(
+                    "{:>width$}",
+                    stats[i],
+                    width = TOTAL_WIDTH - CARD_AREA_WIDTH
+                );
+                println!("|{}{} |", left, right);
+            }
+        }
+        println!("{:-<81}", "");
+        println!("a = attack with weapon  f = fight barehanded  s = skip  e = equip  h = heal");
+        println!();
+        println!("example commands:");
+        println!("s   = skip room");
+        println!("e 2 = equip a weapon at position 2");
+        println!("a 1 = attack monster at position 1");
     }
 
     pub fn print_outcome(outcome: GameOutcome) {
