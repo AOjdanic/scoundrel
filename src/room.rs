@@ -49,4 +49,8 @@ impl Room {
     pub fn iter(&self) -> impl Iterator<Item = &Card> {
         return self.cards.iter();
     }
+
+    pub fn current_room(&self) -> &Vec<Card> {
+        return &self.cards;
+    }
 }

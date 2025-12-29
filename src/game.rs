@@ -1,4 +1,4 @@
-use crate::{deck::Deck, error::GameError, player::Player, room::Room, ui::Action};
+use crate::{card::Card, deck::Deck, error::GameError, player::Player, room::Room, ui::Action};
 
 pub enum GameEvent {
     QuitGame,
@@ -9,6 +9,16 @@ pub enum GameEvent {
 pub enum GameOutcome {
     Win { score: i16 },
     Lose { score: i16 },
+}
+
+pub struct GameInfo {
+    pub health: u8,
+    pub remaining_cards: usize,
+    pub weapon_strength: u8,
+    pub last_slain: u8,
+    pub turn: u8,
+    pub last_skipped: u8,
+    pub room_cards: Vec<Card>,
 }
 
 pub struct Game {
@@ -107,31 +117,16 @@ impl Game {
         }
     }
 
-    pub fn game_info() {}
-
-    // remove
-    pub fn room(&self) -> &Room {
-        return &self.room;
-    }
-
-    // remove
-    pub fn player(&self) -> &Player {
-        return &self.player;
-    }
-
-    // remove
-    pub fn turn(&self) -> u8 {
-        return self.turn;
-    }
-
-    // remove
-    pub fn cards_remaining(&self) -> usize {
-        return self.deck.len();
-    }
-
-    // remove
-    pub fn last_skipped(&self) -> u8 {
-        return self.last_skipped_turn;
+    pub fn game_info(&self) -> GameInfo {
+        return GameInfo {
+            room_cards: self.room.current_room().to_vec(),
+            turn: self.turn,
+            health: self.player.health,
+            last_slain: self.player.weapon.last_slain_monster_strength,
+            remaining_cards: self.deck.len(),
+            last_skipped: self.last_skipped_turn,
+            weapon_strength: self.player.weapon.strength,
+        };
     }
 
     pub fn is_over(&self) -> bool {

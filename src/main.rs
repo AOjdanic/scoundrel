@@ -11,7 +11,7 @@ fn main() {
         game.start_turn();
 
         'turn: loop {
-            Printer::print_room(&game);
+            Printer::print_room(game.game_info());
             let input = match Reader::read_input() {
                 Ok(i) => i,
                 Err(e) => {

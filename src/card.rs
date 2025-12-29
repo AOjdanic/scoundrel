@@ -22,7 +22,7 @@ pub enum CardKind {
     Potion,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Card {
     pub suit: Suit,
     pub rank: Rank,

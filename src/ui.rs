@@ -2,7 +2,7 @@ use std::{fmt, io};
 
 use crate::{
     error::{GameError, UiError},
-    game::{Game, GameOutcome},
+    game::{GameInfo, GameOutcome},
 };
 
 pub enum Action {
@@ -82,24 +82,23 @@ impl Printer {
         print!("\x1B[2J\x1B[1;1H");
     }
 
-    pub fn print_room(game: &Game) {
-        let room = game.room();
-        let health = game.player().health;
-        let weapon_strength = game.player().weapon.strength;
-        let last_slain = game.player().weapon.last_slain_monster_strength;
-        let turn = game.turn();
-        let last_skipped = game.last_skipped();
-        let remaining = game.cards_remaining();
+    pub fn print_room(game_info: GameInfo) {
         let mut index = 0;
-        room.iter().for_each(|card| {
+        game_info.room_cards.iter().for_each(|card| {
             index += 1;
             print!("{}) {:?}{:?}   ", index, card.suit, card.rank)
         });
         print!("\n");
-        println!("health: {health}");
-        println!("cards in deck: {remaining}");
-        println!("weapon: {weapon_strength}, last slain: {last_slain}");
-        println!("turn: {turn}, turn skipped: {last_skipped}");
+        println!("health: {}", game_info.health);
+        println!("cards in deck: {}", game_info.remaining_cards);
+        println!(
+            "weapon: {}, last slain: {}",
+            game_info.weapon_strength, game_info.last_slain
+        );
+        println!(
+            "turn: {}, turn skipped: {}",
+            game_info.turn, game_info.last_skipped
+        );
     }
 
     pub fn print_outcome(outcome: GameOutcome) {
