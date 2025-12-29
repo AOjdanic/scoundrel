@@ -1,13 +1,4 @@
-use crate::{deck::Deck, error::GameError, player::Player, room::Room};
-
-pub enum Action {
-    Quit,
-    Skip,
-    Kill { index: usize },
-    Heal { index: usize },
-    Fight { index: usize },
-    Equip { index: usize },
-}
+use crate::{deck::Deck, error::GameError, player::Player, room::Room, ui::Action};
 
 pub enum GameEvent {
     QuitGame,
@@ -55,8 +46,9 @@ impl Game {
             Action::Quit => Ok(GameEvent::QuitGame),
 
             Action::Skip => {
-                if !self.can_skip() {
-                    return Err(GameError::CannotSkip);
+                match self.can_skip() {
+                    Ok(_) => {}
+                    Err(e) => return Err(e),
                 }
 
                 self.room.clear_into(self.deck.cards_mut());
@@ -127,6 +119,14 @@ impl Game {
         return self.turn;
     }
 
+    pub fn cards_remaining(&self) -> usize {
+        return self.deck.len();
+    }
+
+    pub fn last_skipped(&self) -> u8 {
+        return self.last_skipped_turn;
+    }
+
     pub fn is_over(&self) -> bool {
         return self.deck.is_empty() || self.player.health == 0;
     }
@@ -145,16 +145,16 @@ impl Game {
         }
     }
 
-    fn can_skip(&self) -> bool {
+    fn can_skip(&self) -> Result<(), GameError> {
         if !self.room.is_full() {
-            return false;
+            return Err(GameError::CannotSkip);
         }
 
         if self.turn != 1 && self.turn - self.last_skipped_turn == 1 {
-            return false;
+            return Err(GameError::CannotSkipTwoInRow);
         }
 
-        return true;
+        Ok(())
     }
 
     fn fill_room(&mut self) {

@@ -7,7 +7,7 @@ pub struct Deck {
     cards: Vec<Card>,
 }
 
-impl<'a> Deck {
+impl Deck {
     pub fn new() -> Self {
         let mut cards: Vec<Card> = Vec::new();
 

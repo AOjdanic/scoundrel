@@ -1,35 +1,50 @@
 use scoundrel::{
     game::{Game, GameEvent},
-    ui::{parse_action, print_outcome, print_room, read_input},
+    ui::{clear_screen, parse_action, print_outcome, print_room, read_input},
 };
 
-use std::{error::Error, process};
-
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() {
     let mut game = Game::new();
 
-    'outer: loop {
+    'game: loop {
+        clear_screen();
         game.start_turn();
 
-        'inner: loop {
+        'turn: loop {
             print_room(&game);
-            let input = read_input()?;
-            let action = parse_action(&input)?;
+            let input = match read_input() {
+                Ok(i) => i,
+                Err(e) => {
+                    eprintln!("Fatal input error: {}", e);
+                    break 'game;
+                }
+            };
+
+            let action = match parse_action(&input) {
+                Ok(a) => a,
+                Err(e) => {
+                    eprintln!("{}", e);
+                    continue 'turn;
+                }
+            };
 
             match game.apply(action) {
-                Ok(GameEvent::TurnEnded) => break 'inner,
+                Ok(GameEvent::TurnEnded) => break 'turn,
                 Ok(GameEvent::ActionApplied) => {}
-                Ok(GameEvent::QuitGame) => process::exit(0),
-                Err(e) => println!("{}", e),
+                Ok(GameEvent::QuitGame) => break 'game,
+                Err(e) => {
+                    eprintln!("{}", e);
+                    continue 'turn;
+                }
             }
 
             if game.is_over() {
-                break 'outer;
+                break 'game;
             }
         }
     }
 
-    print_outcome(game.outcome().unwrap());
-
-    Ok(())
+    if let Some(outcome) = game.outcome() {
+        print_outcome(outcome);
+    }
 }
