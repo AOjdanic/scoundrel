@@ -4,6 +4,7 @@ pub enum GameEvent {
     QuitGame,
     TurnEnded,
     ActionApplied,
+    RulesPrinted,
 }
 
 pub enum GameOutcome {
@@ -66,6 +67,8 @@ impl Game {
 
                 Ok(GameEvent::TurnEnded)
             }
+
+            Action::PrintRules => Ok(GameEvent::RulesPrinted),
 
             Action::Fight { index } => {
                 let card = self.room.get(index)?;

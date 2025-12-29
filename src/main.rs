@@ -41,7 +41,22 @@ fn main() {
 
                     break 'turn;
                 }
+
+                Ok(GameEvent::RulesPrinted) => {
+                    Printer::clear_screen();
+                    Printer::print_rules();
+
+                    match Reader::read_input() {
+                        Ok(_) => {}
+                        Err(e) => {
+                            eprintln!("Fatal input error: {}", e);
+                            break 'game;
+                        }
+                    };
+                }
+
                 Ok(GameEvent::ActionApplied) => {}
+
                 Ok(GameEvent::QuitGame) => break 'game,
                 Err(e) => {
                     printer.add_error(AppError::Game(e));

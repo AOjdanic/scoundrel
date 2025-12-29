@@ -9,6 +9,7 @@ use crate::{
 pub enum Action {
     Quit,
     Skip,
+    PrintRules,
     Kill { index: usize },
     Heal { index: usize },
     Fight { index: usize },
@@ -58,6 +59,8 @@ impl Parser {
             "h" => Ok(Action::Heal {
                 index: Self::parse_index(iter.next())?,
             }),
+
+            "r" => Ok(Action::PrintRules),
 
             _ => Err(UiError::UnknownCommand),
         }
@@ -205,6 +208,59 @@ impl Printer {
                 println!("Score: -{}", score);
             }
         }
+    }
+    pub fn print_rules() {
+        let rules_lines = [
+            "Scoundrel is a deck based dungeon crawler game.\n",
+            "It is played with a standard deck of playing cards.",
+            "The deck consists of 44 cards, with all Jokers, Red Face Cards and Red Aces removed.\n",
+            "The deck is called the Dungeon.",
+            "You as a player begin with 20 life points.\n",
+            "Bules:\n",
+            "The 26 Clubs and Spades in the deck are Monsters.",
+            "Their damage is equal to their ordered value. (e.g. 10 is 10, Jack is 11, Queen is 12, King is 13, and Ace is 14)\n",
+            "The 9 Diamonds in the deck are Weapons. Each weapon does as much damage as its value.",
+            "All weapons in Scoundrel are binding, meaning if you pick one up, you must equip it, and discard your previous weapon.\n",
+            "The 9 Hearts in the deck are Health Potions. You may only use one health potion each turn, even if you pull two.",
+            "The second potion you use is simply discarded. You may not restore your life beyond your starting 20 health.\n",
+            "The Game ends when either your life reaches zero or you make your way through the entire Dungeon.\n",
+            "Scoring:\n",
+            "If your life has reached zero, your score is the negative sum of all the remaining monsters in the Dungeon.",
+            "If you have made your way through the entire dungeon, your score is equal to your remaining health points.",
+            "If the deck runs out, and the last cards room is comprised of the remaining 4 or less cards, you don't have to clear that room. You win by default.",
+            "Gameplay:\n",
+            "On start of each turn, cards from the deck are drawn until there are 4 cards face up. These 4 cards represent the Room.",
+            "You may avoid the Room if you wish. If you choose to do so, all four cards in the room will be placed at the bottom of the deck.",
+            "You may avoid as many Rooms as you want, but you may not avoid two Rooms in a row.",
+            "If you choose not to avoid the Room, you must face 3 of the four cards it contains, one at a time.\n",
+            "If you chose a Weapon:",
+            "You must equip it. If you had a previous Weapon equipped, it is discarded.\n",
+            "If you chose a Health Potion:",
+            "Add its number to your health, and then discard it. Your health may not exceed 20, and you may not use more than one Health Potion per turn.",
+            "If you take two Health Potions on a single turn, the second is simply discarded, adding nothing to your health.\n",
+            "If you chose a Monster:",
+            "You may either fight it barehanded or with an equipped Weapon. Even if you have a Weapon equipped, you can still fight a monster barehanded.",
+            "Combat:\n",
+            "If you choose to fight the Monster barehanded, your health is diminished by the full value of that monster.",
+            "If you choose to fight the Monster with your equipped Weapon, then your health is diminished by the difference in strength between the monster and the weapon (if weapon is weaker than the monster) or stays unchanged (if weapon is stronger than the monster)\n",
+            "When you have just equipped a Weapon and haven't fought any monsters, then you can fight any monster with that Weapon.",
+            "But, if you have fought a monster, next monster you decide to fight with that weapon has to be of strength less than that of the previous monster.\n",
+            "For example, if your Weapon is a 5, you can fight any monster, even an Ace. If you fight and Ace you lose 9 health points (difference between Ace strength and weapon strength). Then, if you decide to fight another Ace, you can't do that with the current weapon. The current weapon can only fight monster weaker than Ace. If you fight a monster of strength 2, you take no damage, but with that weapon you can no longer fight any monster, as there is no monster weaker than 2.\n",
+            "In that case, you will either have to equip a new weapon or fight barehanded.\n",
+            "Once you have chosen 3 cards (such that only one remains), the turn is complete. The fourth card remains as part of the next Room.\n",
+            "Legend:\n",
+            " ♡ - health",
+            " ⚔ - weapon strength",
+            " 🥊 - weapon can fight below",
+            " ⏭  - turn when last room skipped",
+            " ↺ - turn number",
+        ];
+        println!();
+        for line in rules_lines {
+            println!("{}", line)
+        }
+        println!();
+        println!("Submit any key to go back to game");
     }
 }
 
