@@ -1,6 +1,7 @@
 use std::{fmt, io};
 
 use crate::{
+    card::{Card, Rank, Suit},
     error::{GameError, UiError},
     game::{GameInfo, GameOutcome},
 };
@@ -86,7 +87,7 @@ impl Printer {
         let mut index = 0;
         game_info.room_cards.iter().for_each(|card| {
             index += 1;
-            print!("{}) {:?}{:?}   ", index, card.suit, card.rank)
+            print!("{}) {}   ", index, card)
         });
         print!("\n");
         println!("health: {}", game_info.health);
@@ -144,6 +145,40 @@ impl fmt::Display for UiError {
             UiError::InputReadFailed => "Failed to read input.",
         };
 
+        write!(f, "{msg}")
+    }
+}
+
+impl fmt::Display for Suit {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let msg = match self {
+            Suit::Spades => "♠",
+            Suit::Clubs => "♣",
+            Suit::Diamonds => "♦",
+            Suit::Hearts => "♥",
+        };
+
+        write!(f, "{msg}")
+    }
+}
+
+impl fmt::Display for Rank {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let msg = match self {
+            Rank::Jack => "J",
+            Rank::Queen => "Q",
+            Rank::King => "K",
+            Rank::Ace => "A",
+            Rank::Num(v) => &v.to_string(),
+        };
+
+        write!(f, "{msg}")
+    }
+}
+
+impl fmt::Display for Card {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let msg = format!("{}{}", self.suit, self.rank);
         write!(f, "{msg}")
     }
 }
