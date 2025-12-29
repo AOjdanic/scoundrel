@@ -107,22 +107,29 @@ impl Game {
         }
     }
 
+    pub fn game_info() {}
+
+    // remove
     pub fn room(&self) -> &Room {
         return &self.room;
     }
 
+    // remove
     pub fn player(&self) -> &Player {
         return &self.player;
     }
 
+    // remove
     pub fn turn(&self) -> u8 {
         return self.turn;
     }
 
+    // remove
     pub fn cards_remaining(&self) -> usize {
         return self.deck.len();
     }
 
+    // remove
     pub fn last_skipped(&self) -> u8 {
         return self.last_skipped_turn;
     }

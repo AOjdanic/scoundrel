@@ -1,18 +1,18 @@
 use scoundrel::{
     game::{Game, GameEvent},
-    ui::{clear_screen, parse_action, print_outcome, print_room, read_input},
+    ui::{Parser, Printer, Reader},
 };
 
 fn main() {
     let mut game = Game::new();
 
     'game: loop {
-        clear_screen();
+        Printer::clear_screen();
         game.start_turn();
 
         'turn: loop {
-            print_room(&game);
-            let input = match read_input() {
+            Printer::print_room(&game);
+            let input = match Reader::read_input() {
                 Ok(i) => i,
                 Err(e) => {
                     eprintln!("Fatal input error: {}", e);
@@ -20,7 +20,7 @@ fn main() {
                 }
             };
 
-            let action = match parse_action(&input) {
+            let action = match Parser::parse_action(&input) {
                 Ok(a) => a,
                 Err(e) => {
                     eprintln!("{}", e);
@@ -45,6 +45,6 @@ fn main() {
     }
 
     if let Some(outcome) = game.outcome() {
-        print_outcome(outcome);
+        Printer::print_outcome(outcome);
     }
 }
