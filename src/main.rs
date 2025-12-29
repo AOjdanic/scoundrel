@@ -12,6 +12,10 @@ fn main() {
         Printer::clear_screen();
         game.start_turn();
 
+        if game.is_over() {
+            break 'game;
+        }
+
         'turn: loop {
             Printer::clear_screen();
             Printer::print_room(game.game_info());
