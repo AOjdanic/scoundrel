@@ -2,7 +2,7 @@ use std::{fmt, io};
 
 use crate::{
     card::{Card, Rank, Suit},
-    error::{GameError, UiError},
+    error::{AppError, GameError, UiError},
     game::{GameInfo, GameOutcome},
 };
 
@@ -76,9 +76,25 @@ impl Parser {
     }
 }
 
-pub struct Printer;
+pub struct Printer {
+    errors: Vec<AppError>,
+}
 
 impl Printer {
+    pub fn new() -> Self {
+        Self { errors: Vec::new() }
+    }
+
+    pub fn add_error(&mut self, e: AppError) {
+        self.errors.push(e);
+    }
+
+    pub fn print_errors(&mut self) {
+        for error in self.errors.drain(0..self.errors.len()) {
+            eprintln!("{}", &error);
+        }
+    }
+
     pub fn clear_screen() {
         print!("\x1B[2J\x1B[1;1H");
     }
@@ -167,12 +183,15 @@ impl Printer {
             }
         }
         println!("{:-<81}", "");
-        println!("a = attack with weapon  f = fight barehanded  s = skip  e = equip  h = heal");
+        println!(
+            "a = attack with weapon  f = fight barehanded  s = skip  e = equip  h = heal  r = rules"
+        );
         println!();
         println!("example commands:");
         println!("s   = skip room");
         println!("e 2 = equip a weapon at position 2");
         println!("a 1 = attack monster at position 1");
+        println!();
     }
 
     pub fn print_outcome(outcome: GameOutcome) {
@@ -216,6 +235,17 @@ impl fmt::Display for UiError {
             UiError::InvalidIndex => "There is no card at the given position.",
             UiError::IndexStartsAtOne => "Card positions start at 1.",
             UiError::InputReadFailed => "Failed to read input.",
+        };
+
+        write!(f, "{msg}")
+    }
+}
+
+impl fmt::Display for AppError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let msg = match self {
+            AppError::Ui(e) => format!("{}", e),
+            AppError::Game(e) => format!("{}", e),
         };
 
         write!(f, "{msg}")

@@ -23,3 +23,8 @@ pub enum UiError {
 }
 
 impl std::error::Error for UiError {}
+
+pub enum AppError {
+    Ui(UiError),
+    Game(GameError),
+}
